@@ -37,13 +37,18 @@ jobs:
       - name: Create DMG
         run: |
           brew install create-dmg
+          # Stage files for DMG
+          mkdir -p dmg-contents
+          cp -r "dist/Steam Input Controller Patch.app" dmg-contents/
+          cp release-files/INSTALL.txt dmg-contents/
           create-dmg \
             --volname "Steam Input Controller Patch" \
-            --window-size 300 200 \
-            --icon-size 100 \
-            --icon "Steam Input Controller Patch.app" 150 100 \
+            --window-size 400 250 \
+            --icon-size 80 \
+            --icon "Steam Input Controller Patch.app" 100 120 \
+            --icon "INSTALL.txt" 300 120 \
             "SteamInputControllerPatch.dmg" \
-            "dist/Steam Input Controller Patch.app"
+            dmg-contents
 
       - name: Create ZIP
         run: |
