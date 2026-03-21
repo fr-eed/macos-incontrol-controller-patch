@@ -30,7 +30,7 @@ Patches `Assembly-CSharp.dll` to replace Xbox360MacProfile's JoystickNames with 
 python3 patch_gui.py
 ```
 
-Automatically detects installed games in Steam, or lets you select an app manually.
+Automatically detects supported games in the default Steam library folder; games installed in other Steam library locations must be selected or provided manually.
 
 ### Command Line
 
