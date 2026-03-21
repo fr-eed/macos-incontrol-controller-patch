@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """
-Tricky Towers Steam Input Patch - GUI
+Steam Input Controller Patch for InControl Games - GUI
 """
 
 import subprocess
 from pathlib import Path
-from tkinter import Tk, Label, Button, Frame, filedialog, messagebox
+from tkinter import Tk, Label, Button, Frame, StringVar, filedialog, messagebox
 from tkinter.font import Font
+from tkinter.ttk import Combobox
 from typing import Optional
 
-from patch import patch_dll, restore_dll
+from patch import DLL_RELATIVE_PATH, find_installed_games, patch_dll, restore_dll
 
 
 def get_app_path(dll_path: Path) -> Optional[Path]:
@@ -32,31 +33,36 @@ def codesign_app(app_path: Path) -> bool:
     except subprocess.CalledProcessError:
         return False
 
-STEAM_APP = (
-    Path.home() / "Library" / "Application Support" / "Steam" / "steamapps" / "common"
-    / "Tricky Towers" / "TrickyTowers.app"
-)
-DLL_RELATIVE = Path("Contents") / "Resources" / "Data" / "Managed" / "Assembly-CSharp.dll"
-
 
 class PatcherApp:
     def __init__(self):
         self.root = Tk()
-        self.root.title("Tricky Towers Controller Patch")
+        self.root.title("Steam Input Controller Patch for InControl Games")
         self.root.resizable(False, False)
 
         self.dll_path: Optional[Path] = None
+        self.installed_games: list[tuple[str, Path]] = []
         self.setup_ui()
-        self.check_steam()
+        self.detect_games()
 
     def setup_ui(self):
         self.root.configure(padx=20, pady=20)
 
         title_font = Font(size=14, weight="bold")
-        Label(self.root, text="Tricky Towers", font=title_font).pack()
-        Label(self.root, text="Steam Input Controller Patch").pack()
+        Label(self.root, text="Steam Input Patch", font=title_font).pack()
+        Label(self.root, text="for InControl Games").pack()
 
         Frame(self.root, height=10).pack()
+
+        self.game_frame = Frame(self.root)
+        self.game_frame.pack(pady=5)
+
+        self.game_var = StringVar()
+        self.game_selector = Combobox(
+            self.game_frame, textvariable=self.game_var,
+            state="readonly", width=25
+        )
+        self.game_selector.bind("<<ComboboxSelected>>", self._on_game_selected)
 
         self.status = Label(self.root, text="No game selected", fg="gray")
         self.status.pack(pady=10)
@@ -80,32 +86,48 @@ class PatcherApp:
 
         Button(self.root, text="Select Different App...", command=self.browse).pack(pady=5)
 
-    def check_steam(self):
-        steam_dll = STEAM_APP / DLL_RELATIVE
-        if steam_dll.exists():
-            use_steam = messagebox.askyesno(
-                "Steam Version Found",
-                "Found Tricky Towers in Steam library.\n\nUse this version?"
+    def detect_games(self):
+        self.installed_games = find_installed_games()
+
+        if len(self.installed_games) == 0:
+            self.browse()
+        elif len(self.installed_games) == 1:
+            name, dll_path = self.installed_games[0]
+            use_it = messagebox.askyesno(
+                "Game Found",
+                f"Found {name} in Steam library.\n\nUse this version?"
             )
-            if use_steam:
-                self.set_dll(steam_dll)
-                return
-        self.browse()
+            if use_it:
+                self.set_dll(dll_path, name)
+            else:
+                self.browse()
+        else:
+            self.game_selector.pack()
+            self.game_selector["values"] = [name for name, _ in self.installed_games]
+            self.game_selector.current(0)
+            self._on_game_selected()
+
+    def _on_game_selected(self, _event=None):
+        idx = self.game_selector.current()
+        if idx < 0:
+            return
+        name, dll_path = self.installed_games[idx]
+        self.set_dll(dll_path, name)
 
     def browse(self):
         app_path = filedialog.askopenfilename(
-            title="Select TrickyTowers.app",
+            title="Select game .app",
             filetypes=[("Application", "*.app")],
             initialdir=Path.home()
         )
         if app_path:
-            dll_path = Path(app_path) / DLL_RELATIVE
+            dll_path = Path(app_path) / DLL_RELATIVE_PATH
             if dll_path.exists():
-                self.set_dll(dll_path)
+                self.set_dll(dll_path, Path(app_path).stem)
             else:
                 messagebox.showerror("Error", "Assembly-CSharp.dll not found in selected app")
 
-    def set_dll(self, path: Path):
+    def set_dll(self, path: Path, game_name: str = ""):
         self.dll_path = path
         self.path_label.config(text=str(path.parent))
         self.patch_btn.config(state="normal")
@@ -113,10 +135,10 @@ class PatcherApp:
 
         backup = path.with_suffix(".dll.bak")
         if backup.exists():
-            self.status.config(text="Ready (backup exists)", fg="green")
+            self.status.config(text=f"{game_name} (backup exists)" if game_name else "Ready (backup exists)", fg="green")
             self.restore_btn.config(state="normal")
         else:
-            self.status.config(text="Ready", fg="green")
+            self.status.config(text=game_name or "Ready", fg="green")
             self.restore_btn.config(state="disabled")
 
     def do_patch(self):
@@ -127,7 +149,7 @@ class PatcherApp:
             self.restore_btn.config(state="normal")
             messagebox.showinfo(
                 "Success",
-                "Patch applied!\n\nNow enable Steam Input:\nSteam -> Tricky Towers -> Properties -> Controller"
+                "Patch applied!\n\nNow enable Steam Input:\nSteam -> Game -> Properties -> Controller"
             )
         else:
             self.status.config(text="Patch failed", fg="red")

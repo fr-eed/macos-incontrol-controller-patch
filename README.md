@@ -1,10 +1,15 @@
-# Tricky Towers Steam Input Patch (macOS)
+# Steam Input Controller Patch for InControl Games (macOS)
 
-Fixes controller support on macOS by patching the game to recognize Steam Input's virtual controllers.
+Fixes controller support on macOS by patching games to recognize Steam Input's virtual controllers.
+
+## Supported Games
+
+- Tricky Towers
+- Overcooked! 2
 
 ## Problem
 
-Tricky Towers uses InControl for input handling. On macOS, Steam Input presents controllers as "Microsoft GamePad-1", "Microsoft GamePad-2", etc. These names don't match any built-in InControl profile, causing controllers to appear as "Unknown Device".
+These games use InControl for input handling. On macOS, Steam Input presents controllers as "Microsoft GamePad-1", "Microsoft GamePad-2", etc. These names don't match any built-in InControl profile, causing controllers to appear as "Unknown Device".
 
 ## Solution
 
@@ -25,27 +30,28 @@ Patches `Assembly-CSharp.dll` to replace Xbox360MacProfile's JoystickNames with 
 python3 patch_gui.py
 ```
 
-Automatically detects Steam installation, or lets you select the app manually.
+Automatically detects supported games in the default Steam library folder; games installed in other Steam library locations must be selected or provided manually.
 
 ### Command Line
 
 ```bash
-python3 patch.py                        # Apply patch (default Steam path)
-python3 patch.py /path/to/dll           # Apply patch (custom path)
-python3 patch.py --restore              # Restore original
-python3 patch.py --restore /path/to/dll # Restore (custom path)
+python3 patch.py                        # Patch all installed games
+python3 patch.py /path/to/dll           # Patch specific DLL
+python3 patch.py --restore              # Restore all installed games
+python3 patch.py --restore /path/to/dll # Restore specific DLL
 ```
 
 ### After Patching
 
 Enable Steam Input:
-1. Steam → Right-click Tricky Towers -> Properties -> Controller
+1. Steam -> Right-click the game -> Properties -> Controller
 2. Select "Enable Steam Input"
 
 ## Tested With
 
 - Tricky Towers (unity.WeirdBeard.Tricky Towers)
 - Unity Player 5.5.1p3 (828893732fe0)
+- Overcooked! 2
 
 ## Notes
 

@@ -1,10 +1,12 @@
-Tricky Towers Controller Patch (macOS)
+Steam Input Controller Patch for InControl Games (macOS)
 
-1. Open the DMG and run "Tricky Towers Controller Patch.app"
+Supported games: Tricky Towers, Overcooked! 2
+
+1. Open the DMG and run "Steam Input Controller Patch.app"
 2. If macOS blocks the app, go to System Settings -> Privacy & Security and click Open Anyway
-3. Patcher auto detects default Steam installation, if game is installed elsewhere select TrickyTowers.app
+3. Patcher auto detects installed games from the default Steam library folder (~/Library/Application Support/Steam/steamapps/common). If multiple games are found, select which to patch. If your game is installed in another Steam library or elsewhere, select the .app manually.
 4. Click "Patch"
-5. Enable Steam Input: Steam -> Tricky Towers -> Properties -> Controller -> Enable Steam Input
+5. Enable Steam Input: Steam -> Right-click the game -> Properties -> Controller -> Enable Steam Input
 
 To restore original: run the app again and click "Restore"
 

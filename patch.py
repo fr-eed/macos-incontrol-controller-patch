@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """
-Tricky Towers Steam Input Patch
+Steam Input Controller Patch for InControl Games
 
 Patches Assembly-CSharp.dll to recognize Steam Input's virtual controllers
 ("Microsoft GamePad-1", "Microsoft GamePad-2", etc.) as Xbox 360 controllers.
+
+Supported games: Tricky Towers, Overcooked! 2
 
 Usage:
     python3 patch.py [--restore] [path/to/Assembly-CSharp.dll]
@@ -17,11 +19,13 @@ from pathlib import Path
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 log = logging.getLogger(__name__)
 
-DEFAULT_DLL = (
-    Path.home() / "Library" / "Application Support" / "Steam" / "steamapps" / "common"
-    / "Tricky Towers" / "TrickyTowers.app" / "Contents" / "Resources" / "Data" / "Managed"
-    / "Assembly-CSharp.dll"
-)
+STEAM_LIBRARY_PATH = Path.home() / "Library/Application Support/Steam/steamapps/common"
+DLL_RELATIVE_PATH = Path("Contents/Resources/Data/Managed/Assembly-CSharp.dll")
+
+GAMES = [
+    ("Tricky Towers", STEAM_LIBRARY_PATH / "Tricky Towers" / "TrickyTowers.app" / DLL_RELATIVE_PATH),
+    ("Overcooked! 2", STEAM_LIBRARY_PATH / "Overcooked! 2" / "Overcooked2.app" / DLL_RELATIVE_PATH),
+]
 
 # Xbox360MacProfile JoystickNames to replace with Steam Input controller names
 # Each original string must be >= length of replacement (will be null-padded)
@@ -99,19 +103,37 @@ def restore_dll(dll_path: Path) -> bool:
     return True
 
 
+def find_installed_games():
+    """Return list of (name, dll_path) for games that are installed."""
+    return [(name, dll_path) for name, dll_path in GAMES if dll_path.exists()]
+
+
 def main() -> int:
-    args = [a for a in sys.argv[1:] if not a.startswith("--")]
-    dll_path = Path(args[0]) if args else DEFAULT_DLL
+    custom_paths = [arg for arg in sys.argv[1:] if not arg.startswith("--")]
+    should_restore = "--restore" in sys.argv
+    process_game = restore_dll if should_restore else patch_dll
 
-    log.info("DLL: %s", dll_path)
+    if custom_paths:
+        games_to_process = [("", Path(custom_paths[0]))]
+    else:
+        games_to_process = find_installed_games()
 
-    if "--restore" in sys.argv:
-        return 0 if restore_dll(dll_path) else 1
+    if not games_to_process:
+        log.error("No supported games found. Provide a path to Assembly-CSharp.dll.")
+        return 1
 
-    if patch_dll(dll_path):
-        log.info("\nEnable Steam Input: Steam -> Tricky Towers -> Properties -> Controller")
-        return 0
-    return 1
+    all_succeeded = True
+    for game_name, dll_path in games_to_process:
+        if game_name:
+            log.info("\n%s", game_name)
+        log.info("DLL: %s", dll_path)
+        if not process_game(dll_path):
+            all_succeeded = False
+
+    if all_succeeded and not should_restore:
+        log.info("\nEnable Steam Input in each game's Steam properties.")
+
+    return 0 if all_succeeded else 1
 
 
 if __name__ == "__main__":

@@ -29,7 +29,7 @@ jobs:
           MACOSX_DEPLOYMENT_TARGET: '10.9'
         run: |
           pyinstaller --onefile --windowed \
-            --name "Tricky Towers Controller Patch" \
+            --name "Steam Input Controller Patch" \
             --add-data "patch.py:." \
             --target-arch universal2 \
             patch_gui.py
@@ -38,29 +38,29 @@ jobs:
         run: |
           brew install create-dmg
           create-dmg \
-            --volname "Tricky Towers Controller Patch" \
+            --volname "Steam Input Controller Patch" \
             --window-size 300 200 \
             --icon-size 100 \
-            --icon "Tricky Towers Controller Patch.app" 150 100 \
-            "TrickyTowersPatch.dmg" \
-            "dist/Tricky Towers Controller Patch.app"
+            --icon "Steam Input Controller Patch.app" 150 100 \
+            "SteamInputControllerPatch.dmg" \
+            "dist/Steam Input Controller Patch.app"
 
       - name: Create ZIP
         run: |
           cp release-files/INSTALL.txt .
-          zip TrickyTowersPatch.zip TrickyTowersPatch.dmg INSTALL.txt
+          zip SteamInputControllerPatch.zip SteamInputControllerPatch.dmg INSTALL.txt
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: TrickyTowersPatch-macOS
-          path: TrickyTowersPatch.zip
+          name: SteamInputControllerPatch-macOS
+          path: SteamInputControllerPatch.zip
 
       - name: Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            TrickyTowersPatch.dmg
-            TrickyTowersPatch.zip
+            SteamInputControllerPatch.dmg
+            SteamInputControllerPatch.zip
           generate_release_notes: true
