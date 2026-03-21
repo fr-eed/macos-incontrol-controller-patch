@@ -43,7 +43,7 @@ jobs:
           cp release-files/INSTALL.txt dmg-contents/
           create-dmg \
             --volname "Steam Input Controller Patch" \
-            --window-size 400 250 \
+            --window-size 500 300 \
             --icon-size 80 \
             --icon "Steam Input Controller Patch.app" 100 120 \
             --icon "INSTALL.txt" 300 120 \
