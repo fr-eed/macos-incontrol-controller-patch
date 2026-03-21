@@ -2,10 +2,13 @@
 
 Fixes controller support on macOS by patching games to recognize Steam Input's virtual controllers.
 
+**[Download the latest release](https://github.com/fr-eed/tricky-towers-controller-fix/releases/latest)** - run the patcher app, no Python required.
+
 ## Supported Games
 
 - Tricky Towers
 - Overcooked! 2
+- Any other Unity game that used InControl package
 
 ## Problem
 
