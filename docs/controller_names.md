@@ -108,3 +108,7 @@ Generic Gamepad
 
 - Steam Input presents controllers as "Microsoft GamePad-1", "Microsoft GamePad-2", etc.
 - These names don't match any existing profile.
+
+## Alternative Fix:
+
+Another approach is to enable `NativeInputEnableMFi = true` in InControl's `InControlManager.OnEnable()` method. This makes InControl use Apple's MFi (Made for iPhone) native controller framework instead of matching joystick names.
