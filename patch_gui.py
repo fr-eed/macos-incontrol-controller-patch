@@ -5,9 +5,8 @@ Steam Input Controller Patch for InControl Games - GUI
 
 import subprocess
 from pathlib import Path
-from tkinter import Tk, Label, Button, Frame, StringVar, filedialog, messagebox
+from tkinter import Tk, Label, Button, Frame, Listbox, filedialog, messagebox, SINGLE
 from tkinter.font import Font
-from tkinter.ttk import Combobox
 from typing import Optional
 
 from patch import DLL_RELATIVE_PATH, find_installed_games, patch_dll, restore_dll
@@ -54,15 +53,17 @@ class PatcherApp:
 
         Frame(self.root, height=10).pack()
 
-        self.game_frame = Frame(self.root)
-        self.game_frame.pack(pady=5)
+        Label(self.root, text="Select a game:", fg="gray").pack(anchor="w")
 
-        self.game_var = StringVar()
-        self.game_selector = Combobox(
-            self.game_frame, textvariable=self.game_var,
-            state="readonly", width=25
+        self.game_frame = Frame(self.root)
+        self.game_frame.pack(pady=5, fill="x")
+
+        self.game_list = Listbox(
+            self.game_frame, selectmode=SINGLE, width=35, height=6,
+            exportselection=False
         )
-        self.game_selector.bind("<<ComboboxSelected>>", self._on_game_selected)
+        self.game_list.pack(fill="x")
+        self.game_list.bind("<<ListboxSelect>>", self._on_game_selected)
 
         self.status = Label(self.root, text="No game selected", fg="gray")
         self.status.pack(pady=10)
@@ -84,33 +85,33 @@ class PatcherApp:
         self.codesign_btn = Button(btn_frame, text="Codesign", width=10, command=self.do_codesign, state="disabled")
         self.codesign_btn.pack(side="left", padx=5)
 
-        Button(self.root, text="Select Different App...", command=self.browse).pack(pady=5)
-
     def detect_games(self):
         self.installed_games = find_installed_games()
 
+        # Populate list with found games
+        for name, _ in self.installed_games:
+            self.game_list.insert("end", name)
+
+        # Add option to browse for custom game
+        self.game_list.insert("end", "── Select other app... ──")
+
         if len(self.installed_games) == 0:
-            self.browse()
-        elif len(self.installed_games) == 1:
-            name, dll_path = self.installed_games[0]
-            use_it = messagebox.askyesno(
-                "Game Found",
-                f"Found {name} in Steam library.\n\nUse this version?"
-            )
-            if use_it:
-                self.set_dll(dll_path, name)
-            else:
-                self.browse()
+            self.status.config(text="No games found", fg="gray")
         else:
-            self.game_selector.pack()
-            self.game_selector["values"] = [name for name, _ in self.installed_games]
-            self.game_selector.current(0)
-            self._on_game_selected()
+            self.status.config(text=f"Found {len(self.installed_games)} game(s)")
 
     def _on_game_selected(self, _event=None):
-        idx = self.game_selector.current()
-        if idx < 0:
+        selection = self.game_list.curselection()
+        if not selection:
             return
+        idx = selection[0]
+
+        # Last item is "Select other app..."
+        if idx >= len(self.installed_games):
+            self.game_list.selection_clear(0, "end")
+            self.browse()
+            return
+
         name, dll_path = self.installed_games[idx]
         self.set_dll(dll_path, name)
 
@@ -123,7 +124,15 @@ class PatcherApp:
         if app_path:
             dll_path = Path(app_path) / DLL_RELATIVE_PATH
             if dll_path.exists():
-                self.set_dll(dll_path, Path(app_path).stem)
+                name = Path(app_path).stem
+                # Add to list before the "Select other" option
+                idx = len(self.installed_games)
+                self.installed_games.append((name, dll_path))
+                self.game_list.insert(idx, name)
+                # Select it
+                self.game_list.selection_clear(0, "end")
+                self.game_list.selection_set(idx)
+                self.set_dll(dll_path, name)
             else:
                 messagebox.showerror("Error", "Assembly-CSharp.dll not found in selected app")
 
