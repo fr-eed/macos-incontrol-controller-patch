@@ -6,10 +6,23 @@ Steam Input Controller Patch for InControl Games - GUI
 import subprocess
 import tempfile
 import plistlib
+import sys
 from pathlib import Path
-from tkinter import Tk, Frame, PhotoImage, filedialog, messagebox
-from tkinter import ttk
 from typing import Optional
+
+# Catch error if tkinter is not available
+try:
+    from tkinter import Tk, Frame, PhotoImage, filedialog, messagebox
+    from tkinter import ttk
+except ImportError:
+    print("❌ Error: The 'tkinter' GUI module was not found in your Python installation.")
+    print("\nOn macOS (especially when using Homebrew), the Tkinter module is often separated")
+    print("from the main Python installation to minimize system dependencies.")
+    print("\n[Solution 1] Install the Tkinter module for your specific Python version:")
+    print("           brew install python-tk@<your_python_version> (e.g., brew install python-tk@3.14)")
+    print("\n[Solution 2] Skip the GUI and run the CLI script directly:")
+    print("           python3 patch.py\n")
+    sys.exit(1)
 
 from patch import DLL_RELATIVE_PATH, find_installed_games, patch_dll, restore_dll
 
@@ -45,7 +58,8 @@ def get_app_icon(app_path: Path, size: int = 32) -> Optional[PhotoImage]:
         )
 
         return PhotoImage(file=tmp_path)
-    except Exception:
+    except Exception as e:
+        print(f"Could not load app icon: {e}", file=sys.stderr)
         return None
 
 
@@ -71,7 +85,7 @@ def codesign_app(app_path: Path) -> bool:
 
 
 class PatcherApp:
-    def __init__(self):
+    def __init__(self) -> None:
         self.root = Tk()
         self.root.title("Steam Input Patch")
         self.root.resizable(False, False)
@@ -83,7 +97,7 @@ class PatcherApp:
         self.setup_ui()
         self.detect_games()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         self.root.configure(padx=20, pady=20)
 
         # Configure treeview style for taller rows
@@ -131,7 +145,7 @@ class PatcherApp:
         self.codesign_btn = ttk.Button(btn_frame, text="Codesign", width=10, command=self.do_codesign, state="disabled")
         self.codesign_btn.pack(side="left", padx=5)
 
-    def detect_games(self):
+    def detect_games(self) -> None:
         self.installed_games = find_installed_games()
 
         # Populate tree with found games
@@ -147,12 +161,12 @@ class PatcherApp:
         # Add option to browse for custom game
         self.game_tree.insert("", "end", iid="browse", text=" 🔍", values=("Select other app...",))
 
-        if len(self.installed_games) == 0:
+        if not self.installed_games:
             self.status.config(text="No games found", foreground="gray")
         else:
             self.status.config(text=f"Found {len(self.installed_games)} game(s)", foreground="gray")
 
-    def _on_game_selected(self, _event=None):
+    def _on_game_selected(self, _event=None) -> None:
         selection = self.game_tree.selection()
         if not selection:
             return
@@ -168,14 +182,14 @@ class PatcherApp:
         name, dll_path = self.installed_games[idx]
         self.set_dll(dll_path, name)
 
-    def browse(self):
-        app_path = filedialog.askopenfilename(
+    def browse(self) -> None:
+        app_path_str = filedialog.askopenfilename(
             title="Select game .app",
             filetypes=[("Application", "*.app")],
             initialdir=Path.home()
         )
-        if app_path:
-            app_path = Path(app_path)
+        if app_path_str:
+            app_path = Path(app_path_str)
             dll_path = app_path / DLL_RELATIVE_PATH
             if dll_path.exists():
                 name = app_path.stem
@@ -196,7 +210,7 @@ class PatcherApp:
             else:
                 messagebox.showerror("Error", "Assembly-CSharp.dll not found in selected app")
 
-    def set_dll(self, path: Path, game_name: str = ""):
+    def set_dll(self, path: Path, game_name: str = "") -> None:
         self.dll_path = path
         self.path_label.config(text=str(path.parent))
         self.patch_btn.config(state="normal")
@@ -210,7 +224,7 @@ class PatcherApp:
             self.status.config(text=game_name or "Ready", foreground="green")
             self.restore_btn.config(state="disabled")
 
-    def do_patch(self):
+    def do_patch(self) -> None:
         if not self.dll_path:
             return
         if patch_dll(self.dll_path):
@@ -224,7 +238,7 @@ class PatcherApp:
             self.status.config(text="Patch failed", foreground="red")
             messagebox.showerror("Error", "Patch failed - strings not found or already patched")
 
-    def do_restore(self):
+    def do_restore(self) -> None:
         if not self.dll_path:
             return
         if restore_dll(self.dll_path):
@@ -234,7 +248,7 @@ class PatcherApp:
             self.status.config(text="Restore failed", foreground="red")
             messagebox.showerror("Error", "No backup found")
 
-    def do_codesign(self):
+    def do_codesign(self) -> None:
         if not self.dll_path:
             return
         app_path = get_app_path(self.dll_path)
@@ -248,9 +262,14 @@ class PatcherApp:
             self.status.config(text="Codesign failed", foreground="red")
             messagebox.showerror("Error", "Codesign failed")
 
-    def run(self):
+    def run(self) -> None:
         self.root.mainloop()
 
 
+def main() -> None:
+    app = PatcherApp()
+    app.run()
+
+
 if __name__ == "__main__":
-    PatcherApp().run()
+    main()

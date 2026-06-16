@@ -11,10 +11,12 @@ Usage:
     python3 patch.py [--restore] [path/to/Assembly-CSharp.dll]
 """
 
+import argparse
 import logging
 import shutil
 import sys
 from pathlib import Path
+from typing import List, Tuple
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 log = logging.getLogger(__name__)
@@ -22,15 +24,12 @@ log = logging.getLogger(__name__)
 STEAM_LIBRARY_PATH = Path.home() / "Library/Application Support/Steam/steamapps/common"
 DLL_RELATIVE_PATH = Path("Contents/Resources/Data/Managed/Assembly-CSharp.dll")
 
-GAMES = [
+GAMES: List[Tuple[str, Path]] = [
     ("Tricky Towers", STEAM_LIBRARY_PATH / "Tricky Towers" / "TrickyTowers.app" / DLL_RELATIVE_PATH),
     ("Overcooked! 2", STEAM_LIBRARY_PATH / "Overcooked! 2" / "Overcooked2.app" / DLL_RELATIVE_PATH),
 ]
 
-# Xbox360MacProfile JoystickNames to replace with Steam Input controller names
-# Each original string must be >= length of replacement (will be null-padded)
-# Note: © = \xa9 (copyright symbol) prefixes some strings in the DLL
-PATCHES = [
+PATCHES: List[Tuple[str, str]] = [
     ("Microsoft Wireless 360 Controller", "Microsoft GamePad-1"),
     ("Mad Catz, Inc. Mad Catz FPS Pro GamePad", "Microsoft GamePad-2"),
     ("Mad Catz, Inc. MadCatz Call of Duty GamePad", "Microsoft GamePad-3"),
@@ -76,50 +75,67 @@ def patch_dll(dll_path: Path) -> bool:
         log.error("DLL not found: %s", dll_path)
         return False
 
-    if not backup.exists():
-        shutil.copy2(dll_path, backup)
-        log.info("Backup: %s", backup.name)
+    try:
+        if not backup.exists():
+            shutil.copy2(dll_path, backup)
+            log.info("Backup: %s", backup.name)
 
-    data = bytearray(dll_path.read_bytes())
+        data = bytearray(dll_path.read_bytes())
 
-    patched = sum(1 for old, new in PATCHES if patch_string(data, old, new))
+        patched = sum(1 for old, new in PATCHES if patch_string(data, old, new))
 
-    if patched == 0:
-        log.error("No strings found to patch")
+        if patched == 0:
+            log.error("No strings found to patch")
+            return False
+
+        dll_path.write_bytes(data)
+        log.info("Patched %d/%d controller names", patched, len(PATCHES))
+        return True
+
+    except PermissionError:
+        log.error("Permission denied: Unable to read/write to %s. Try checking folder permissions.", dll_path.name)
         return False
-
-    dll_path.write_bytes(data)
-    log.info("Patched %d/%d controller names", patched, len(PATCHES))
-    return True
+    except Exception as e:
+        log.error("An unexpected error occurred while patching: %s", str(e))
+        return False
 
 
 def restore_dll(dll_path: Path) -> bool:
     backup = dll_path.with_suffix(".dll.bak")
     if not backup.exists():
-        log.error("No backup found")
+        log.error("No backup found for %s", dll_path.name)
         return False
-    shutil.copy2(backup, dll_path)
-    log.info("Restored from backup")
-    return True
+
+    try:
+        shutil.copy2(backup, dll_path)
+        log.info("Restored from backup successfully")
+        return True
+    except PermissionError:
+        log.error("Permission denied: Unable to restore file %s", dll_path.name)
+        return False
 
 
-def find_installed_games():
+def find_installed_games() -> List[Tuple[str, Path]]:
     """Return list of (name, dll_path) for games that are installed."""
     return [(name, dll_path) for name, dll_path in GAMES if dll_path.exists()]
 
 
 def main() -> int:
-    custom_paths = [arg for arg in sys.argv[1:] if not arg.startswith("--")]
-    should_restore = "--restore" in sys.argv
-    process_game = restore_dll if should_restore else patch_dll
+    parser = argparse.ArgumentParser(description="Steam Input Controller Patch for InControl Games")
+    parser.add_argument("custom_path", nargs="?", type=Path, help="Optional specific path to Assembly-CSharp.dll")
+    parser.add_argument("--restore", action="store_true", help="Restore the DLL from backup")
 
-    if custom_paths:
-        games_to_process = [("", Path(custom_paths[0]))]
+    args = parser.parse_args()
+
+    process_game = restore_dll if args.restore else patch_dll
+
+    if args.custom_path:
+        games_to_process = [("", args.custom_path)]
     else:
         games_to_process = find_installed_games()
 
     if not games_to_process:
-        log.error("No supported games found. Provide a path to Assembly-CSharp.dll.")
+        log.error("No supported games found automatically. Provide a direct path to Assembly-CSharp.dll.")
         return 1
 
     all_succeeded = True
@@ -127,11 +143,12 @@ def main() -> int:
         if game_name:
             log.info("\n%s", game_name)
         log.info("DLL: %s", dll_path)
+
         if not process_game(dll_path):
             all_succeeded = False
 
-    if all_succeeded and not should_restore:
-        log.info("\nEnable Steam Input in each game's Steam properties.")
+    if all_succeeded and not args.restore:
+        log.info("\nSuccess! Now enable Steam Input in each game's Steam properties.")
 
     return 0 if all_succeeded else 1
 
