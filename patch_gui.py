@@ -59,6 +59,7 @@ def get_app_icon(app_path: Path, size: int = 32) -> Optional[PhotoImage]:
 
         return PhotoImage(file=tmp_path)
     except Exception as e:
+        print(f"Could not load app icon: {e}", file=sys.stderr)
         return None
 
 

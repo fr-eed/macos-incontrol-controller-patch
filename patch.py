@@ -7,6 +7,8 @@ Patches Assembly-CSharp.dll to recognize Steam Input's virtual controllers
 
 Supported games: Tricky Towers, Overcooked! 2
 
+Usage:
+    python3 patch.py [--restore] [path/to/Assembly-CSharp.dll]
 """
 
 import argparse
@@ -79,7 +81,7 @@ def patch_dll(dll_path: Path) -> bool:
             log.info("Backup: %s", backup.name)
 
         data = bytearray(dll_path.read_bytes())
-        
+
         patched = sum(1 for old, new in PATCHES if patch_string(data, old, new))
 
         if patched == 0:
@@ -89,7 +91,7 @@ def patch_dll(dll_path: Path) -> bool:
         dll_path.write_bytes(data)
         log.info("Patched %d/%d controller names", patched, len(PATCHES))
         return True
-    
+
     except PermissionError:
         log.error("Permission denied: Unable to read/write to %s. Try checking folder permissions.", dll_path.name)
         return False
@@ -103,7 +105,7 @@ def restore_dll(dll_path: Path) -> bool:
     if not backup.exists():
         log.error("No backup found for %s", dll_path.name)
         return False
-    
+
     try:
         shutil.copy2(backup, dll_path)
         log.info("Restored from backup successfully")
@@ -122,9 +124,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Steam Input Controller Patch for InControl Games")
     parser.add_argument("custom_path", nargs="?", type=Path, help="Optional specific path to Assembly-CSharp.dll")
     parser.add_argument("--restore", action="store_true", help="Restore the DLL from backup")
-    
+
     args = parser.parse_args()
-    
+
     process_game = restore_dll if args.restore else patch_dll
 
     if args.custom_path:
@@ -141,7 +143,7 @@ def main() -> int:
         if game_name:
             log.info("\n%s", game_name)
         log.info("DLL: %s", dll_path)
-        
+
         if not process_game(dll_path):
             all_succeeded = False
 
