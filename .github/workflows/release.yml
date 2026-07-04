@@ -1,71 +1,31 @@
-name: Build and Release
+name: Release
 
 on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
   build:
-    runs-on: macos-latest
+    uses: ./.github/workflows/build.yml
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Download build artifact
+        uses: actions/download-artifact@v8
         with:
-          python-version: '3.9'
-
-      - name: Install PyInstaller
-        run: pip install pyinstaller
-
-      - name: Build app
-        env:
-          MACOSX_DEPLOYMENT_TARGET: '10.9'
-        run: |
-          pyinstaller --onefile --windowed \
-            --name "Steam Input Controller Patch" \
-            --add-data "patch.py:." \
-            --target-arch universal2 \
-            patch_gui.py
-
-      - name: Create DMG
-        run: |
-          brew install create-dmg
-          # Stage files for DMG
-          mkdir -p dmg-contents
-          cp -r "dist/Steam Input Controller Patch.app" dmg-contents/
-          cp release-files/INSTALL.txt dmg-contents/
-          create-dmg \
-            --volname "Steam Input Controller Patch" \
-            --window-size 500 300 \
-            --icon-size 80 \
-            --icon "Steam Input Controller Patch.app" 100 120 \
-            --icon "INSTALL.txt" 300 120 \
-            "SteamInputControllerPatch.dmg" \
-            dmg-contents
-
-      - name: Create ZIP
-        run: |
-          cp release-files/INSTALL.txt .
-          zip SteamInputControllerPatch.zip SteamInputControllerPatch.dmg INSTALL.txt
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: SteamInputControllerPatch-macOS
-          path: SteamInputControllerPatch.zip
+          name: ${{ needs.build.outputs.artifact }}
 
       - name: Release
-        uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v3
         with:
           files: |
-            SteamInputControllerPatch.dmg
-            SteamInputControllerPatch.zip
+            ${{ needs.build.outputs.dmg }}
+            ${{ needs.build.outputs.zip }}
           generate_release_notes: true
