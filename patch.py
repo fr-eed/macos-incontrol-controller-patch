@@ -36,6 +36,38 @@ PATCHES: List[Tuple[str, str]] = [
     ("\xa9Microsoft Corporation Controller", "Microsoft GamePad-4"),
 ]
 
+# JoystickNames of every InControl OS X profile. Steam Input cannot hide
+# physical HID devices on macOS, so a pad recognized by one of these profiles
+# attaches twice: as its Steam virtual controller and as the physical device.
+# Neutering the names forces all input through Steam Input.
+NATIVE_PROFILE_PATCHES: List[Tuple[str, str]] = [
+    ("BDA PS3 Airflo wired controller", "UnusedPad-01"),
+    (" USB,2-axis 8-button gamepad", "UnusedPad-02"),
+    ("Zeroplus PS Vibration Feedback Converter", "UnusedPad-03"),
+    ("Zeroplus PS Vibration Feedback Converter ", "UnusedPad-04"),
+    ("Logitech Logitech Dual Action", "UnusedPad-05"),
+    ("Logitech Gamepad F310", "UnusedPad-06"),
+    ("Logitech Logitech RumblePad 2 USB", "UnusedPad-07"),
+    ("Logitech Rumble Gamepad F510", "UnusedPad-08"),
+    ("Logitech Logitech Cordless RumblePad 2", "UnusedPad-09"),
+    ("Unknown Moga Pro HID", "UnusedPad-10"),
+    ("Unknown Gamepad", "UnusedPad-11"),
+    ("Sony PLAYSTATION(R)3 Controller", "UnusedPad-12"),
+    ("SHENGHIC 2009/0708ZXW-V1Inc. PLAYSTATION(R)3Conteroller", "UnusedPad-13"),
+    ("SZMY-POWER CO.,LTD. GAMEPAD 3 TURBO", "UnusedPad-14"),
+    ("Gasia Co.,Ltd PS(R) Gamepad", "UnusedPad-15"),
+    ("Unknown Wireless Controller", "UnusedPad-16"),
+    ("Sony Computer Entertainment Wireless Controller", "UnusedPad-17"),
+    ("Sony Interactive Entertainment Wireless Controller", "UnusedPad-18"),
+    ("Razer Razer Serval", "UnusedPad-19"),
+    ("Unknown Razer Serval", "UnusedPad-20"),
+    ("DragonRise Inc.   Generic   USB  Joystick  ", "UnusedPad-21"),
+    ("Unknown Zeemote: SteelSeries FREE", "UnusedPad-22"),
+    ("Microsoft Xbox One Wired Controller", "UnusedPad-23"),
+    ("\xa9Microsoft Corporation Xbox Original Wired Controller", "UnusedPad-24"),
+    ("Sony Interactive Entertainment DUALSHOCK\xae4 USB Wireless Adaptor", "UnusedPad-25"),
+]
+
 
 def patch_string(data: bytearray, old_str: str, new_str: str) -> bool:
     """Replace a .NET User String in the DLL."""
@@ -68,7 +100,7 @@ def patch_string(data: bytearray, old_str: str, new_str: str) -> bool:
     return True
 
 
-def patch_dll(dll_path: Path) -> bool:
+def patch_dll(dll_path: Path, patches: List[Tuple[str, str]] = PATCHES) -> bool:
     backup = dll_path.with_suffix(".dll.bak")
 
     if not dll_path.exists():
@@ -82,14 +114,14 @@ def patch_dll(dll_path: Path) -> bool:
 
         data = bytearray(dll_path.read_bytes())
 
-        patched = sum(1 for old, new in PATCHES if patch_string(data, old, new))
+        patched = sum(1 for old, new in patches if patch_string(data, old, new))
 
         if patched == 0:
             log.error("No strings found to patch")
             return False
 
         dll_path.write_bytes(data)
-        log.info("Patched %d/%d controller names", patched, len(PATCHES))
+        log.info("Patched %d/%d controller names", patched, len(patches))
         return True
 
     except PermissionError:
@@ -124,10 +156,22 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Steam Input Controller Patch for InControl Games")
     parser.add_argument("custom_path", nargs="?", type=Path, help="Optional specific path to Assembly-CSharp.dll")
     parser.add_argument("--restore", action="store_true", help="Restore the DLL from backup")
+    parser.add_argument(
+        "--disable-native-profiles",
+        action="store_true",
+        help="Experimental: also neuter every built-in macOS controller profile so physical "
+             "pads cannot attach alongside their Steam Input virtual controllers",
+    )
 
     args = parser.parse_args()
 
-    process_game = restore_dll if args.restore else patch_dll
+    patches = PATCHES + (NATIVE_PROFILE_PATCHES if args.disable_native_profiles else [])
+
+    if args.restore:
+        process_game = restore_dll
+    else:
+        def process_game(dll_path: Path) -> bool:
+            return patch_dll(dll_path, patches)
 
     if args.custom_path:
         games_to_process = [("", args.custom_path)]

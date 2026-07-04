@@ -12,7 +12,7 @@ from typing import Optional
 
 # Catch error if tkinter is not available
 try:
-    from tkinter import Tk, Frame, PhotoImage, filedialog, messagebox
+    from tkinter import Tk, Frame, PhotoImage, BooleanVar, filedialog, messagebox
     from tkinter import ttk
 except ImportError:
     print("❌ Error: The 'tkinter' GUI module was not found in your Python installation.")
@@ -24,7 +24,14 @@ except ImportError:
     print("           python3 patch.py\n")
     sys.exit(1)
 
-from patch import DLL_RELATIVE_PATH, find_installed_games, patch_dll, restore_dll
+from patch import (
+    DLL_RELATIVE_PATH,
+    NATIVE_PROFILE_PATCHES,
+    PATCHES,
+    find_installed_games,
+    patch_dll,
+    restore_dll,
+)
 
 
 def get_app_icon(app_path: Path, size: int = 32) -> Optional[PhotoImage]:
@@ -132,6 +139,13 @@ class PatcherApp:
         self.path_label.pack()
 
         ttk.Frame(self.root, height=10).pack()
+
+        self.disable_native_profiles = BooleanVar(value=False)
+        ttk.Checkbutton(
+            self.root,
+            text="Disable native controller profiles (experimental)",
+            variable=self.disable_native_profiles,
+        ).pack()
 
         btn_frame = ttk.Frame(self.root)
         btn_frame.pack(pady=10)
@@ -241,7 +255,8 @@ class PatcherApp:
     def do_patch(self) -> None:
         if not self.dll_path:
             return
-        if patch_dll(self.dll_path):
+        patches = PATCHES + (NATIVE_PROFILE_PATCHES if self.disable_native_profiles.get() else [])
+        if patch_dll(self.dll_path, patches):
             self.status.config(text="Patched!", foreground="green")
             self.restore_btn.config(state="normal")
             messagebox.showinfo(
