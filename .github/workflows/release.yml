@@ -17,15 +17,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download build artifact
+      - name: Download DMG artifact
         uses: actions/download-artifact@v8
         with:
-          name: ${{ needs.build.outputs.artifact }}
+          name: ${{ needs.build.outputs.dmg-artifact }}
+          path: assets
+
+      - name: Download ZIP artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ needs.build.outputs.zip-artifact }}
+          path: assets
 
       - name: Release
         uses: softprops/action-gh-release@v3
         with:
-          files: |
-            ${{ needs.build.outputs.dmg }}
-            ${{ needs.build.outputs.zip }}
+          files: assets/*
           generate_release_notes: true
