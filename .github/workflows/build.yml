@@ -4,23 +4,19 @@ on:
   workflow_dispatch:
   workflow_call:
     outputs:
-      artifact:
-        description: "Name of the uploaded build artifact"
-        value: ${{ jobs.build.outputs.artifact }}
-      dmg:
-        description: "DMG filename inside the artifact"
-        value: ${{ jobs.build.outputs.dmg }}
-      zip:
-        description: "ZIP filename inside the artifact"
-        value: ${{ jobs.build.outputs.zip }}
+      dmg-artifact:
+        description: "Name of the artifact containing the DMG"
+        value: ${{ jobs.build.outputs.dmg-artifact }}
+      zip-artifact:
+        description: "Name of the artifact containing the ZIP"
+        value: ${{ jobs.build.outputs.zip-artifact }}
 
 jobs:
   build:
     runs-on: macos-latest
     outputs:
-      artifact: ${{ steps.paths.outputs.artifact }}
-      dmg: ${{ steps.paths.outputs.dmg }}
-      zip: ${{ steps.paths.outputs.zip }}
+      dmg-artifact: ${{ steps.artifacts.outputs.dmg-artifact }}
+      zip-artifact: ${{ steps.artifacts.outputs.zip-artifact }}
 
     steps:
       - uses: actions/checkout@v7
@@ -64,17 +60,20 @@ jobs:
           cp release-files/INSTALL.txt .
           zip SteamInputControllerPatch.zip SteamInputControllerPatch.dmg INSTALL.txt
 
-      - name: Export build outputs
-        id: paths
+      - name: Export artifact names
+        id: artifacts
         run: |
-          echo "artifact=SteamInputControllerPatch-macOS" >> "$GITHUB_OUTPUT"
-          echo "dmg=SteamInputControllerPatch.dmg" >> "$GITHUB_OUTPUT"
-          echo "zip=SteamInputControllerPatch.zip" >> "$GITHUB_OUTPUT"
+          echo "dmg-artifact=SteamInputControllerPatch-dmg" >> "$GITHUB_OUTPUT"
+          echo "zip-artifact=SteamInputControllerPatch-zip" >> "$GITHUB_OUTPUT"
 
-      - name: Upload artifact
+      - name: Upload DMG artifact
         uses: actions/upload-artifact@v7
         with:
-          name: SteamInputControllerPatch-macOS
-          path: |
-            SteamInputControllerPatch.dmg
-            SteamInputControllerPatch.zip
+          name: SteamInputControllerPatch-dmg
+          path: SteamInputControllerPatch.dmg
+
+      - name: Upload ZIP artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: SteamInputControllerPatch-zip
+          path: SteamInputControllerPatch.zip
