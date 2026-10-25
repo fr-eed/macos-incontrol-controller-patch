@@ -63,3 +63,13 @@ Enable Steam Input:
 - Backup created automatically (`Assembly-CSharp.dll.bak`)
 - Game updates will overwrite the patch
 - See `docs/` for technical details
+
+## Star History
+
+<a href="https://www.star-history.com/?repos=fr-eed%2Fmacos-incontrol-controller-patch&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=fr-eed/macos-incontrol-controller-patch&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=fr-eed/macos-incontrol-controller-patch&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=fr-eed/macos-incontrol-controller-patch&type=date&legend=top-left" />
+ </picture>
+</a>
