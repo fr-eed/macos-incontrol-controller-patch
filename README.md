@@ -8,6 +8,7 @@ Fixes controller support on macOS by patching games to recognize Steam Input's v
 
 - Tricky Towers
 - Overcooked! 2
+- Human Fall Flat
 - Any other Unity game that used InControl package
 
 ## Problem

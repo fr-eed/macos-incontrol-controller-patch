@@ -5,7 +5,7 @@ Steam Input Controller Patch for InControl Games
 Patches Assembly-CSharp.dll to recognize Steam Input's virtual controllers
 ("Microsoft GamePad-1", "Microsoft GamePad-2", etc.) as Xbox 360 controllers.
 
-Supported games: Tricky Towers, Overcooked! 2
+Supported games: Tricky Towers, Overcooked! 2, Human Fall Flat
 
 Usage:
     python3 patch.py [--restore] [path/to/Assembly-CSharp.dll]
@@ -27,6 +27,7 @@ DLL_RELATIVE_PATH = Path("Contents/Resources/Data/Managed/Assembly-CSharp.dll")
 GAMES: List[Tuple[str, Path]] = [
     ("Tricky Towers", STEAM_LIBRARY_PATH / "Tricky Towers" / "TrickyTowers.app" / DLL_RELATIVE_PATH),
     ("Overcooked! 2", STEAM_LIBRARY_PATH / "Overcooked! 2" / "Overcooked2.app" / DLL_RELATIVE_PATH),
+    ("Human Fall Flat", STEAM_LIBRARY_PATH / "Human Fall Flat" / "Human.app" / DLL_RELATIVE_PATH),
 ]
 
 PATCHES: List[Tuple[str, str]] = [
