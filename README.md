@@ -25,6 +25,14 @@ Patches `Assembly-CSharp.dll` to replace Xbox360MacProfile's JoystickNames with 
 | Mad Catz, Inc. MadCatz Call of Duty GamePad | Microsoft GamePad-3 |
 | ©Microsoft Corporation Controller | Microsoft GamePad-4 |
 
+### Disable native controller profiles
+
+It is recommended to use all controller sthrough steam input as some controllers can be registered twice by the game which causes double inputs. 
+
+tick "Disable native controller profiles" in the GUI (or use `--disable-native-profiles`). This will null out all profile names except Steam input controllers, basically disabling any controller that doesn't go through Steam input
+
+To undo, click Restore and patch again without it.
+
 ## Usage
 
 ### GUI (recommended)
@@ -42,6 +50,7 @@ python3 patch.py                        # Patch all installed games
 python3 patch.py /path/to/dll           # Patch specific DLL
 python3 patch.py --restore              # Restore all installed games
 python3 patch.py --restore /path/to/dll # Restore specific DLL
+python3 patch.py --disable-native-profiles  # Also disable native pad profiles (experimental)
 ```
 
 ### After Patching
