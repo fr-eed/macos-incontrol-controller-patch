@@ -222,21 +222,13 @@ class PatcherApp:
 
     def _choose_app(self) -> str:
         """Pick a .app bundle natively on macOS, or fallback to file dialog."""
-        result = subprocess.run(
-            ["osascript", "-e",
-             'POSIX path of (choose file of type {"com.apple.application-bundle"} '
-             'with prompt "Select game .app")'],
-            capture_output=True, text=True,
-        )
-        if result.returncode == 0:
-            return result.stdout.strip().rstrip("/")
-        if "-128" in result.stderr:  # user cancelled
-            return ""
-        return filedialog.askopenfilename(
+        # No filetypes filter: newer Tk grays out .app bundles when filtering by *.app
+        app_path_str = filedialog.askopenfilename(
             title="Select game .app",
-            filetypes=[("Application", "*.app")],
-            initialdir=Path.home()
+            initialdir=Path.home(),
         )
+
+        return app_path_str.rstrip("/")
 
     def set_dll(self, path: Path, game_name: str = "") -> None:
         self.dll_path = path
