@@ -140,7 +140,7 @@ class PatcherApp:
 
         ttk.Frame(self.root, height=10).pack()
 
-        self.disable_native_profiles = BooleanVar(value=False)
+        self.disable_native_profiles = BooleanVar(value=True)
         ttk.Checkbutton(
             self.root,
             text="Disable native controller profiles (experimental)",
