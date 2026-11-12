@@ -101,7 +101,31 @@ def patch_string(data: bytearray, old_str: str, new_str: str) -> bool:
     return True
 
 
+def user_string_pattern(text: str) -> bytes:
+    """Encode text as a .NET User String: length byte, then UTF-16 LE."""
+    utf16 = text.encode("utf-16-le")
+    length_byte = bytes([len(utf16) + 1])
+
+    return length_byte + utf16
+
+
+def is_patched(data: bytes) -> bool:
+    """Check if the DLL already holds any Steam Input name from PATCHES."""
+    for _, new_str in PATCHES:
+        pattern = user_string_pattern(new_str)
+        if pattern in data:
+            return True
+
+    return False
+
+
 def patch_dll(dll_path: Path, patches: List[Tuple[str, str]] = PATCHES) -> bool:
+    """Patch the DLL, starting from a clean backup.
+
+    If the DLL is patched and a backup exists, keep the backup.
+    Otherwise create a new backup from the DLL.
+    Then copy the backup to the DLL and patch it.
+    """
     backup = dll_path.with_suffix(".dll.bak")
 
     if not dll_path.exists():
@@ -109,11 +133,17 @@ def patch_dll(dll_path: Path, patches: List[Tuple[str, str]] = PATCHES) -> bool:
         return False
 
     try:
-        if not backup.exists():
-            shutil.copy2(dll_path, backup)
-            log.info("Backup: %s", backup.name)
+        current = dll_path.read_bytes()
+        already_patched = is_patched(current)
 
-        data = bytearray(dll_path.read_bytes())
+        if not (already_patched and backup.exists()):
+            shutil.copy2(dll_path, backup)
+            log.info("Backup created: %s", backup.name)
+
+        shutil.copy2(backup, dll_path)
+
+        original = dll_path.read_bytes()
+        data = bytearray(original)
 
         patched = sum(1 for old, new in patches if patch_string(data, old, new))
 
