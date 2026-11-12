@@ -164,7 +164,7 @@ class PatcherApp:
         ).pack(anchor="w")
         ttk.Label(
             options,
-            text="Recommended. Stops controllers from registering twice."
+            text="Recommended. Stops controllers from registering twice. "
                  "If selected, Steam Input should be enabled for all controllers.",
             foreground="gray", font=small_font, wraplength=380,
         ).pack(anchor="w", padx=(22, 0))
