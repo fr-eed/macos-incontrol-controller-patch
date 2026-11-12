@@ -1,6 +1,6 @@
 Steam Input Controller Patch for InControl Games (macOS)
 
-Supported games: Tricky Towers, Overcooked! 2
+Supported games: Tricky Towers, Overcooked! 2, Human Fall Flat
 
 Can also patch any other game that was made with Unity that used InControl package
 
