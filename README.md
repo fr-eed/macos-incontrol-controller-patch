@@ -1,8 +1,11 @@
 # Steam Input Controller Patch for InControl Games (macOS)
 
+[![Downloads](https://img.shields.io/github/downloads/fr-eed/macos-incontrol-controller-patch/total?style=for-the-badge&logo=github&label=DOWNLOADS)](https://github.com/fr-eed/macos-incontrol-controller-patch/releases)
+
 Fixes controller support on macOS by patching games to recognize Steam Input's virtual controllers.
 
-**[Download the latest release](https://github.com/fr-eed/tricky-towers-controller-fix/releases/latest)** - run the patcher app, no Python required.
+> [!TIP]
+> **[Download the latest release](https://github.com/fr-eed/macos-incontrol-controller-patch/releases/latest)** and run the patcher app. No Python required.
 
 ## Supported Games
 
