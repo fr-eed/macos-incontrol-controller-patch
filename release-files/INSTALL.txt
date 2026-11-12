@@ -8,8 +8,10 @@ Can also patch any other game that was made with Unity that used InControl packa
 2. If macOS blocks the app, go to System Settings -> Privacy & Security and click Open Anyway
 3. Patcher auto detects installed games from the default Steam library folder (~/Library/Application Support/Steam/steamapps/common). 
 If multiple games are found, select which to patch. If your game is installed in another Steam library or elsewhere, select the .app manually.
-4. Click "Patch"
-5. Enable Steam Input: Steam -> Right-click the game -> Properties -> Controller -> Enable Steam Input
+4. tick "Disable native controller profiles". Some controllers can be registered twice by the game,
+which causes double inputs. This setting disables any controller that doesn't go through Steam Input.
+5. Click "Patch"
+6. Enable Steam Input: Steam -> Right-click the game -> Properties -> Controller -> Enable Steam Input
 
 To restore original: run the app again and click "Restore"
 
