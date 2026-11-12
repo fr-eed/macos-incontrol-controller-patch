@@ -3,3 +3,4 @@ dist/
 *.spec
 env/
 __pycache__/
+!tests/fixtures/*.dll
