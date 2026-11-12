@@ -1,6 +1,7 @@
 # Steam Input Controller Patch for InControl Games (macOS)
 
 [![Downloads](https://img.shields.io/github/downloads/fr-eed/macos-incontrol-controller-patch/total?style=for-the-badge&logo=github&logoColor=66C0F4&label=DOWNLOADS&labelColor=171A21&color=66C0F4)](https://github.com/fr-eed/macos-incontrol-controller-patch/releases)
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-FFDD00?style=for-the-badge&logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/zerofreed)
 
 Fixes controller support on macOS by patching games to recognize Steam Input's virtual controllers.
 
