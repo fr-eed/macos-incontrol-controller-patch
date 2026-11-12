@@ -13,7 +13,7 @@ from typing import Optional
 # Catch error if tkinter is not available
 try:
     from tkinter import Tk, Frame, PhotoImage, BooleanVar, filedialog, messagebox
-    from tkinter import ttk
+    from tkinter import font, ttk
 except ImportError:
     print("❌ Error: The 'tkinter' GUI module was not found in your Python installation.")
     print("\nOn macOS (especially when using Homebrew), the Tkinter module is often separated")
@@ -105,59 +105,86 @@ class PatcherApp:
         self.detect_games()
 
     def setup_ui(self) -> None:
-        self.root.configure(padx=20, pady=20)
+        self.root.configure(padx=24, pady=20)
+
+        base_font = font.nametofont("TkDefaultFont")
+        base_size = base_font.cget("size")
+        title_font = base_font.copy()
+        title_font.configure(size=base_size + 8, weight="bold")
+        heading_font = base_font.copy()
+        heading_font.configure(weight="bold")
+        small_font = base_font.copy()
+        small_font.configure(size=base_size - 2)
+        self.fonts = [title_font, heading_font, small_font]  # Keep references alive
 
         # Configure treeview style for taller rows
         style = ttk.Style()
-        style.configure("Treeview", rowheight=40, font=("Helvetica Neue", 12))
+        style.configure("Treeview", rowheight=40)
 
         # Title
-        ttk.Label(self.root, text="Steam Input Patch", font=("Helvetica Neue", 16, "bold")).pack()
-        ttk.Label(self.root, text="for InControl Games", foreground="gray").pack()
+        header = ttk.Frame(self.root)
+        header.pack(fill="x")
+        ttk.Label(header, text="Steam Input Patch", font=title_font).pack(anchor="w")
+        ttk.Label(header, text="Controller fix for InControl games on macOS", foreground="gray").pack(anchor="w")
 
-        ttk.Frame(self.root, height=10).pack()
+        ttk.Separator(self.root).pack(fill="x", pady=14)
 
-        ttk.Label(self.root, text="Select a game:", foreground="gray").pack(anchor="w")
+        ttk.Label(self.root, text="GAMES", font=small_font, foreground="gray").pack(anchor="w")
 
         self.game_frame = ttk.Frame(self.root)
-        self.game_frame.pack(pady=5, fill="x")
+        self.game_frame.pack(pady=(4, 14), fill="x")
 
         # Treeview with icon and name columns
         self.game_tree = ttk.Treeview(
             self.game_frame, columns=("name",), show="tree",
-            height=5, selectmode="browse"
+            height=4, selectmode="browse"
         )
         self.game_tree.column("#0", width=50, stretch=False)  # Icon column
-        self.game_tree.column("name", width=260)
+        self.game_tree.column("name", width=320)
         self.game_tree.pack(fill="x")
         self.game_tree.bind("<<TreeviewSelect>>", self._on_game_selected)
 
-        self.status = ttk.Label(self.root, text="No game selected", foreground="gray")
-        self.status.pack(pady=10)
+        details = ttk.LabelFrame(self.root, text="Selected game", padding=(12, 8))
+        details.pack(fill="x")
 
-        self.path_label = ttk.Label(self.root, text="", foreground="gray", wraplength=300, justify="center")
-        self.path_label.pack()
+        self.status = ttk.Label(details, text="No game selected", foreground="gray", font=heading_font)
+        self.status.pack(anchor="w")
 
-        ttk.Frame(self.root, height=10).pack()
+        self.path_label = ttk.Label(details, text="", foreground="gray", font=small_font, wraplength=380)
+        self.path_label.pack(anchor="w", pady=(2, 0))
+
+        options = ttk.Frame(self.root)
+        options.pack(fill="x", pady=(14, 0))
 
         self.disable_native_profiles = BooleanVar(value=True)
         ttk.Checkbutton(
-            self.root,
-            text="Disable native controller profiles (experimental)",
+            options,
+            text="Disable native controller profiles",
             variable=self.disable_native_profiles,
-        ).pack()
+        ).pack(anchor="w")
+        ttk.Label(
+            options,
+            text="Recommended. Stops controllers from registering twice."
+                 "If selected, Steam Input should be enabled for all controllers.",
+            foreground="gray", font=small_font, wraplength=380,
+        ).pack(anchor="w", padx=(22, 0))
+
+        ttk.Separator(self.root).pack(fill="x", pady=14)
 
         btn_frame = ttk.Frame(self.root)
-        btn_frame.pack(pady=10)
+        btn_frame.pack(fill="x")
 
-        self.patch_btn = ttk.Button(btn_frame, text="Patch", width=10, command=self.do_patch, state="disabled")
-        self.patch_btn.pack(side="left", padx=5)
+        self.codesign_btn = ttk.Button(btn_frame, text="Codesign", command=self.do_codesign, state="disabled")
+        self.codesign_btn.pack(side="left")
+
+        self.patch_btn = ttk.Button(
+            btn_frame, text="Patch", width=10, default="active",
+            command=self.do_patch, state="disabled",
+        )
+        self.patch_btn.pack(side="right")
 
         self.restore_btn = ttk.Button(btn_frame, text="Restore", width=10, command=self.do_restore, state="disabled")
-        self.restore_btn.pack(side="left", padx=5)
-
-        self.codesign_btn = ttk.Button(btn_frame, text="Codesign", width=10, command=self.do_codesign, state="disabled")
-        self.codesign_btn.pack(side="left", padx=5)
+        self.restore_btn.pack(side="right", padx=(0, 8))
 
     def detect_games(self) -> None:
         self.installed_games = find_installed_games()
