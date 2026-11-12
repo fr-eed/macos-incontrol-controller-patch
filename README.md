@@ -8,6 +8,8 @@ Fixes controller support on macOS by patching games to recognize Steam Input's v
 > [!TIP]
 > **[Download the latest release](https://github.com/fr-eed/macos-incontrol-controller-patch/releases/latest)** and run the patcher app. No Python required.
 
+<p align="center"><img src="docs/screenshot.png" width="420" alt="Steam Input Patch window"></p>
+
 ## Supported Games
 
 - Tricky Towers
