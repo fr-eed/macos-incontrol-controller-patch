@@ -34,11 +34,11 @@ Patches `Assembly-CSharp.dll` to replace Xbox360MacProfile's JoystickNames with 
 
 ### Disable native controller profiles
 
-It is recommended to use all controller sthrough steam input as some controllers can be registered twice by the game which causes double inputs. 
+It is recommended to use all controllers through steam input as some controllers can be registered twice by the game which causes double inputs. 
 
 tick "Disable native controller profiles" in the GUI (or use `--disable-native-profiles`). This will null out all profile names except Steam input controllers, basically disabling any controller that doesn't go through Steam input
 
-To undo, click Restore and patch again without it.
+To undo, untick it and click Patch again.
 
 ## Usage
 
@@ -76,7 +76,7 @@ Enable Steam Input:
 
 - Supports up to 4 controllers
 - Backup created automatically (`Assembly-CSharp.dll.bak`)
-- Game updates will overwrite the patch
+- Game updates will overwrite the patch, after updating the game just run the patcher again
 - See `docs/` for technical details
 
 ## Star History
