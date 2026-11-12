@@ -40,10 +40,16 @@ def natives_disabled(data: bytes) -> bool:
     return has_string(data, "UnusedPad-01")
 
 
+def setUpModule() -> None:
+    logging.disable(logging.CRITICAL)
+
+
+def tearDownModule() -> None:
+    logging.disable(logging.NOTSET)
+
+
 class PatchDllTest(unittest.TestCase):
     def setUp(self) -> None:
-        logging.disable(logging.CRITICAL)
-
         self.tmp = tempfile.TemporaryDirectory()
         work_dir = Path(self.tmp.name)
 
@@ -54,7 +60,6 @@ class PatchDllTest(unittest.TestCase):
 
     def tearDown(self) -> None:
         self.tmp.cleanup()
-        logging.disable(logging.NOTSET)
 
     def test_fresh_patch_renames_steam_input_names(self) -> None:
         ok = patch.patch_dll(self.dll, patch.PATCHES)
@@ -181,12 +186,10 @@ class PatchDllTest(unittest.TestCase):
 
 class PatchStringTest(unittest.TestCase):
     def test_longer_replacement_is_rejected(self) -> None:
-        logging.disable(logging.CRITICAL)
         data = bytearray(fake_dll("v1"))
 
         ok = patch.patch_string(data, "Unknown Gamepad", "A name that is far too long")
 
-        logging.disable(logging.NOTSET)
         self.assertFalse(ok)
 
     def test_shorter_replacement_is_zero_padded(self) -> None:
