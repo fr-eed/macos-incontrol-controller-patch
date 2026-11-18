@@ -13,6 +13,9 @@ which causes double inputs. This setting disables any controller that doesn't go
 5. Click "Patch"
 6. Enable Steam Input: Steam -> Right-click the game -> Properties -> Controller -> Enable Steam Input
 
+Human Fall Flat with DualShock 4 controllers over Bluetooth: tick "Bluetooth DualShock 4 mode"
+instead of step 4, click "Patch", and DISABLE Steam Input for the game instead of step 6.
+
 To restore original: run the app again and click "Restore"
 
 Note: If the game won't launch after patching, click "Codesign" to re-sign the app.

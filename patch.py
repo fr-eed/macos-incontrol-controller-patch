@@ -193,13 +193,25 @@ def main() -> int:
         help="Experimental: also neuter every built-in macOS controller profile so physical "
              "pads cannot attach alongside their Steam Input virtual controllers",
     )
+    parser.add_argument(
+        "--ds4-bluetooth",
+        action="store_true",
+        help="Human Fall Flat only: read DualShock 4 controllers over Bluetooth with a replacement "
+             "InControlNative plugin instead of Steam Input (turn Steam Input off)",
+    )
 
     args = parser.parse_args()
 
     patches = PATCHES + (NATIVE_PROFILE_PATCHES if args.disable_native_profiles else [])
 
+    import ds4_bluetooth
+
     if args.restore:
-        process_game = restore_dll
+        def process_game(dll_path: Path) -> bool:
+            ds4_bluetooth.restore_plugin(dll_path)
+            return restore_dll(dll_path)
+    elif args.ds4_bluetooth:
+        process_game = ds4_bluetooth.install
     else:
         def process_game(dll_path: Path) -> bool:
             return patch_dll(dll_path, patches)
@@ -222,7 +234,9 @@ def main() -> int:
         if not process_game(dll_path):
             all_succeeded = False
 
-    if all_succeeded and not args.restore:
+    if all_succeeded and args.ds4_bluetooth:
+        log.info("\nSuccess! Now disable Steam Input in the game's Steam properties.")
+    elif all_succeeded and not args.restore:
         log.info("\nSuccess! Now enable Steam Input in each game's Steam properties.")
 
     return 0 if all_succeeded else 1

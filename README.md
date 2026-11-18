@@ -40,6 +40,22 @@ tick "Disable native controller profiles" in the GUI (or use `--disable-native-p
 
 To undo, untick it and click Patch again.
 
+### Bluetooth DualShock 4 mode (Human Fall Flat)
+
+Two problems stop DualShock 4 controllers from working in Human Fall Flat local co-op:
+
+- Over Bluetooth, macOS switches a DS4 to its extended input report (`0x11`). InControl can only read the basic report (`0x01`), so the controller is detected but does nothing.
+- Through Steam Input, every virtual pad has the same HID Location ID (`0x0`), so with two controllers their inputs overwrite each other. One player is blocked while the other moves.
+
+Tick "Bluetooth DualShock 4 mode" in the GUI (or use `--ds4-bluetooth`), and **disable** Steam Input for the game. This mode:
+
+- replaces the game's `InControlNative` plugin with [`native/InControlNative.c`](native/InControlNative.c), which decodes DS4 reports over Bluetooth and USB itself and gives every controller its own device;
+- patches `Assembly-CSharp.dll` so InControl uses native input.
+
+The original plugin is kept as `InControlNative.orig`, and Restore puts back both files. The Steam Input patch isn't used in this mode. This mode is only for Human Fall Flat, and other games are rejected. The plugin also lives as a standalone app in [ds4-bluetooth-fix-mac](https://github.com/TheNils96/ds4-bluetooth-fix-mac).
+
+To build the plugin when running from source: `sh native/build.sh` (needs the Xcode command line tools).
+
 ## Usage
 
 ### GUI (recommended)
@@ -58,6 +74,7 @@ python3 patch.py /path/to/dll           # Patch specific DLL
 python3 patch.py --restore              # Restore all installed games
 python3 patch.py --restore /path/to/dll # Restore specific DLL
 python3 patch.py --disable-native-profiles  # Also disable native pad profiles (experimental)
+python3 patch.py --ds4-bluetooth        # Human Fall Flat: DualShock 4 over Bluetooth, Steam Input off
 ```
 
 ### After Patching

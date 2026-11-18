@@ -30,6 +30,9 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Build DS4 Bluetooth plugin
+        run: sh native/build.sh
+
       - name: Build app
         env:
           MACOSX_DEPLOYMENT_TARGET: '10.9'
@@ -37,6 +40,7 @@ jobs:
           pyinstaller --onefile --windowed \
             --name "Steam Input Controller Patch" \
             --add-data "patch.py:." \
+            --add-data "native/InControlNative:native" \
             --target-arch universal2 \
             patch_gui.py
 

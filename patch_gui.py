@@ -24,6 +24,7 @@ except ImportError:
     print("           python3 patch.py\n")
     sys.exit(1)
 
+import ds4_bluetooth
 from patch import (
     DLL_RELATIVE_PATH,
     NATIVE_PROFILE_PATCHES,
@@ -157,15 +158,30 @@ class PatcherApp:
         options.pack(fill="x", pady=(14, 0))
 
         self.disable_native_profiles = BooleanVar(value=True)
-        ttk.Checkbutton(
+        self.native_profiles_check = ttk.Checkbutton(
             options,
             text="Disable native controller profiles",
             variable=self.disable_native_profiles,
-        ).pack(anchor="w")
+        )
+        self.native_profiles_check.pack(anchor="w")
         ttk.Label(
             options,
             text="Recommended. Stops controllers from registering twice. "
                  "If selected, Steam Input should be enabled for all controllers.",
+            foreground="gray", font=small_font, wraplength=380,
+        ).pack(anchor="w", padx=(22, 0))
+
+        self.ds4_bluetooth = BooleanVar(value=False)
+        ttk.Checkbutton(
+            options,
+            text="Bluetooth DualShock 4 mode (Human Fall Flat)",
+            variable=self.ds4_bluetooth,
+            command=self._on_ds4_toggled,
+        ).pack(anchor="w", pady=(8, 0))
+        ttk.Label(
+            options,
+            text="Instead of the Steam Input patch: reads DualShock 4 controllers over Bluetooth or USB "
+                 "directly, each as its own player. Steam Input must be disabled for the game.",
             foreground="gray", font=small_font, wraplength=380,
         ).pack(anchor="w", padx=(22, 0))
 
@@ -185,6 +201,9 @@ class PatcherApp:
 
         self.restore_btn = ttk.Button(btn_frame, text="Restore", width=10, command=self.do_restore, state="disabled")
         self.restore_btn.pack(side="right", padx=(0, 8))
+
+    def _on_ds4_toggled(self) -> None:
+        self.native_profiles_check.config(state="disabled" if self.ds4_bluetooth.get() else "normal")
 
     def detect_games(self) -> None:
         self.installed_games = find_installed_games()
@@ -274,6 +293,9 @@ class PatcherApp:
     def do_patch(self) -> None:
         if not self.dll_path:
             return
+        if self.ds4_bluetooth.get():
+            self.do_install_ds4()
+            return
         patches = PATCHES + (NATIVE_PROFILE_PATCHES if self.disable_native_profiles.get() else [])
         if patch_dll(self.dll_path, patches):
             self.status.config(text="Patched!", foreground="green")
@@ -286,9 +308,24 @@ class PatcherApp:
             self.status.config(text="Patch failed", foreground="red")
             messagebox.showerror("Error", "Patch failed - strings not found or already patched")
 
+    def do_install_ds4(self) -> None:
+        if not self.dll_path:
+            return
+        if ds4_bluetooth.install(self.dll_path):
+            self.status.config(text="DS4 Bluetooth mode installed!", foreground="green")
+            self.restore_btn.config(state="normal")
+            messagebox.showinfo(
+                "Success",
+                "DS4 Bluetooth mode installed!\n\nNow disable Steam Input:\nSteam -> Game -> Properties -> Controller"
+            )
+        else:
+            self.status.config(text="Install failed", foreground="red")
+            messagebox.showerror("Error", "Install failed - this mode only supports Human Fall Flat")
+
     def do_restore(self) -> None:
         if not self.dll_path:
             return
+        ds4_bluetooth.restore_plugin(self.dll_path)
         if restore_dll(self.dll_path):
             self.status.config(text="Restored", foreground="green")
             messagebox.showinfo("Success", "Restored from backup!")
